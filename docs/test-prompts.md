@@ -26,7 +26,8 @@ Assume the current time is a weekday morning and the demo user is Alex (`demo-st
 - "Book me a room" -> asks for time (and people / duration if needed). No tool call yet.
 - "I need a desk" -> asks for day/time.
 - "Book a room for 4" -> asks for time.
-- "Book me a desk with a plug at 4 tomorrow" -> has enough: `find_desks` (`needs_power: true`), then `book_desk`. Assume a sensible default duration or ask one question about it; never ask more than one.
+- "Book me a desk with a plug at 4 tomorrow" -> has enough: `find_desks` (`needs_power: true`), then `book_desk`. Duration missing -> assumes 1 hour and says so; never asks about duration.
+- "I need a room for 4 at 2pm tomorrow" (looking, not committing) -> `find_rooms` only, availability card, no booking. "Book me ..." -> books straight away.
 
 ## 4. Rule violations (explain in one sentence, offer closest valid option, no invalid booking call)
 
@@ -74,6 +75,10 @@ Assume the current time is a weekday morning and the demo user is Alex (`demo-st
 
 All of sections 1-4 pass, with replies of at most 2 short sentences and zero invented data. Record failures and the fix below.
 
+Automated run: `tests/agent/` (see its README). Last full run: 32/32 scenarios behave as expected against mock tools (2026-10-09, `claude-sonnet-5-5`).
+
 | Date | Prompt | Problem | Fix |
 |---|---|---|---|
-| | | | |
+| 2026-10-09 | "Cancel my desk booking" (after booking it) | Agent apologised for "confirming without checks" because history is plain text and hides earlier tool calls | Prompt: earlier assistant messages used tools you can't see; trust them |
+| 2026-10-09 | "I need a room for 4 at 2pm tomorrow" | Asked for duration instead of showing the availability card (demo step 3) | Prompt: assume 1 hour and say so |
+| 2026-10-09 | "I need..." vs "Book me..." | Risk of booking when Alex only asked to look | Prompt: looking -> `find_*` only; "book me" -> book |
