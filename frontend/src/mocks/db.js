@@ -93,7 +93,9 @@ const bookings = (() => {
 // ---------- book reservations ----------
 
 export const COLLECT_FROM = 'Reservations shelf, floor 1'
+export const RETURN_TO = 'Help desk, floor 1'
 const HOLD_DAYS = 3
+const LOAN_DAYS = 21
 
 // Alex starts with nothing reserved; reserving in chat adds to this
 const bookHolds = []
@@ -130,6 +132,9 @@ function toHoldData(h) {
     collect_from: COLLECT_FROM,
     collect_by: h.collect_by?.toISOString(),
     available_from: h.available_from?.toISOString(),
+    // 3-week loan from when it's available to you; hand it back at the help desk
+    due: addDays(h.status === 'ready' ? startOfDay(new Date()) : h.available_from, LOAN_DAYS).toISOString(),
+    return_to: RETURN_TO,
     book: { ...book },
   }
 }

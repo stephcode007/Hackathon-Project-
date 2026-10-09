@@ -7,26 +7,21 @@ import { List, PageHeader, Section } from './shared'
 const TYPE_LABEL = { room: 'Room', desk: 'Desk', laptop: 'Laptop' }
 
 // Everything Alex has booked. Tap a booking or a book to see it.
-export default function MyBookings({ onBack, onOpenBooking, onOpenBook, onExplore }) {
+export default function MyBookings({ onOpenBooking, onOpenBook, onGoChat }) {
   const spaces = myBookings(demoNow()).map(toBookingData)
   const books = myBookHolds()
 
   return (
     <>
-      <PageHeader title="My bookings" onBack={onBack} />
+      <PageHeader title="Bookings" />
 
       {spaces.length === 0 && books.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line px-6 py-10 text-center">
           <div className="text-sm font-semibold">Nothing booked yet</div>
-          <p className="mt-1 text-sm text-muted">Book a study space or a laptop, or reserve a book in Chat, and it'll show up here.</p>
-          <div className="mt-4 flex justify-center gap-2">
-            <button onClick={() => onExplore('spaces')} className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white active:scale-95">
-              Study spaces
-            </button>
-            <button onClick={() => onExplore('laptops')} className="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold active:scale-95">
-              Laptops
-            </button>
-          </div>
+          <p className="mt-1 text-sm text-muted">Ask Bookmark to book a study space, request a laptop or reserve a book, and it'll show up here.</p>
+          <button onClick={onGoChat} className="mt-4 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white active:scale-95">
+            Ask in Chat
+          </button>
         </div>
       ) : (
         <>
@@ -73,7 +68,8 @@ export default function MyBookings({ onBack, onOpenBooking, onOpenBook, onExplor
                         <div className="truncate text-sm font-semibold">{h.book.title}</div>
                         <div className="truncate text-xs text-muted">{h.book.author}</div>
                         <div className="mt-0.5 text-xs font-semibold text-accent">
-                          {h.status === 'ready' ? `Ready to collect by ${shortDate(new Date(h.collect_by))}` : `Waiting list · back ${shortDate(new Date(h.available_from))}`}
+                          {h.status === 'ready' ? `Collect by ${shortDate(new Date(h.collect_by))}` : `Waiting list · back ${shortDate(new Date(h.available_from))}`}
+                          {' · '}due {shortDate(new Date(h.due))}
                         </div>
                       </div>
                       <Icon name="chevron" size={18} className="shrink-0 text-muted" />

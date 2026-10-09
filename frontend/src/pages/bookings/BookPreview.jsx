@@ -10,7 +10,7 @@ export default function BookPreview({ hold, onBack, onCancel }) {
 
   return (
     <div className="flex min-h-full flex-col">
-      <PageHeader title="Book" onBack={onBack} backLabel="My bookings" />
+      <PageHeader title="Book" onBack={onBack} />
 
       <div className="rounded-2xl border border-line bg-white p-4">
         <div className="flex gap-4">
@@ -36,6 +36,14 @@ export default function BookPreview({ hold, onBack, onCancel }) {
                 ? `A copy is waiting on the ${hold.collect_from.toLowerCase()}. Collect it by ${shortDate(new Date(hold.collect_by))}.`
                 : `A copy is due back ${shortDate(new Date(hold.available_from))}. It'll be held for you on the ${hold.collect_from.toLowerCase()}.`}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-start gap-3 rounded-xl bg-paper p-3">
+          <Icon name="calendar" size={18} className="mt-0.5 shrink-0 text-muted" />
+          <div className="text-sm">
+            <div className="font-semibold">Due back {shortDate(new Date(hold.due))}</div>
+            <div className="text-xs text-muted">3-week loan. When you're done, hand it back at the {hold.return_to.toLowerCase()}.</div>
           </div>
         </div>
       </div>

@@ -27,7 +27,7 @@ export default function BookingDetail({ booking: b, onBack, onCancel }) {
   return (
     <div className="flex min-h-full flex-col">
       <button onClick={onBack} className="mb-3 flex items-center gap-1.5 self-start px-1 text-sm font-semibold text-muted hover:text-ink">
-        <Icon name="back" size={17} /> My bookings
+        <Icon name="back" size={17} /> Bookings
       </button>
 
       <div className="rounded-2xl border border-line bg-white p-4">
@@ -54,6 +54,11 @@ export default function BookingDetail({ booking: b, onBack, onCancel }) {
           <Row icon="pin" label={b.resource_type === 'laptop' ? 'Collect from' : 'Where'}>
             {where}
           </Row>
+          {b.resource_type === 'laptop' && (
+            <Row icon="arrow" label="Hand it back">
+              {where} by {hhmm(end)}
+            </Row>
+          )}
           {(b.features?.length > 0 || b.capacity) && (
             <div className="py-3 pl-[30px] text-xs">
               <Features features={b.features} capacity={b.capacity} />

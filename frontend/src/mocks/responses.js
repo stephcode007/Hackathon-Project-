@@ -323,7 +323,7 @@ function myBookings(now) {
 function reserveBook(book) {
   const hold = db.reserveBook(book.book_id)
   const card = { type: 'book_reserved', data: hold }
-  if (hold.already) return { reply: `You've already reserved ${book.title}. It's in My bookings.`, cards: [card] }
+  if (hold.already) return { reply: `You've already reserved ${book.title}. It's in Bookings.`, cards: [card] }
   return {
     reply:
       hold.status === 'ready'

@@ -1,10 +1,12 @@
 import { Wordmark } from '../brand/Logo'
 import Icon from '../Icon'
 import { STUDENT } from '../../mocks/db'
+import ChatHistory from './ChatHistory'
 import { TABS } from './tabs'
 
-// Website (wide screen) navigation: logo, tabs, and the profile at the bottom
-export default function Sidebar({ tab, onChange }) {
+// Website (wide screen) navigation: logo, tabs, chat history below them,
+// and the profile at the bottom
+export default function Sidebar({ tab, onChange, history }) {
   const item = (active) =>
     `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
       active ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-white hover:text-ink'
@@ -20,7 +22,10 @@ export default function Sidebar({ tab, onChange }) {
           </button>
         ))}
       </nav>
-      <button onClick={() => onChange('profile')} className={`mt-auto ${item(tab === 'profile')}`}>
+      <div className="mt-6 flex min-h-0 flex-1 flex-col border-t border-line pt-5">
+        <ChatHistory {...history} />
+      </div>
+      <button onClick={() => onChange('profile')} className={`mt-3 ${item(tab === 'profile')}`}>
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
           <Icon name="user" size={17} />
         </span>
