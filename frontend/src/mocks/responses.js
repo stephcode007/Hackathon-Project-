@@ -21,12 +21,10 @@ export function mockReply(messages) {
   if (m) return cancel(m[1])
 
   if (/my bookings|what (have i|did i) book|my reservations|upcoming/.test(t)) return myBookings(now)
-  if (/\b(pass|qr|barcode|student id|scan in)\b/.test(t)) {
-    return {
-      reply: "Here's your library pass. Hold it up to the gate scanner.",
-      cards: [{ type: 'library_pass', data: { student_name: db.STUDENT.name, qr_value: db.STUDENT.qr } }],
-    }
-  }
+
+  // "Reserve Clean Code" (also what a book card's Reserve button sends)
+  const titled = db.books.find((b) => t.includes(b.title.toLowerCase()))
+  if (titled && /\b(reserve|borrow|hold)\b|^book\b/.test(t) && !RESOURCE_WORDS.test(t)) return reserveBook(titled)
 
   if (/how (do i|to|can i|does it|do you) book|how does booking work/.test(t)) return howToBook()
 
@@ -56,7 +54,7 @@ export function mockReply(messages) {
 
   if (!replies.length && !cards.length) {
     return {
-      reply: "I can find books and tell you where they are, show which rooms are free, book rooms, desks and laptops, and check how busy it is. Try “Do you have a machine learning book?” or “How many laptops are free?”",
+      reply: "I can find books, tell you where they are and reserve them, check which laptops are free and book one, and show and book study spaces. Try “Do you have a machine learning book?” or “How many laptops are free?”",
       cards: [],
     }
   }
@@ -221,7 +219,7 @@ function laptops(t, now) {
     .map(([pickup, n]) => `${n} at the ${pickup.toLowerCase()}`)
     .join(' and ')
   return {
-    reply: `${options.length} of ${total} laptops are free ${when(slot)}: ${where}. Tap one to book it.`,
+    reply: `${options.length} of ${total} laptops are free ${when(slot)}: ${where}. Tap one to request it.`,
     cards: [availability('laptop', slot, options.slice(0, 4))],
   }
 }
@@ -271,7 +269,7 @@ function allInOne(t, now) {
     else if (!laptop) lines.push(`All laptops are out ${when(slot)}.`)
     else {
       const b = db.createBooking(laptop.id, slot.start, slot.end)
-      lines.push(`And ${laptop.name} is yours ${when(slot)}. Pick it up from the ${laptop.pickup.toLowerCase()}.`)
+      lines.push(`And I've requested ${laptop.name} for ${when(slot)}. I'll tell you when it's approved, then pick it up from the ${laptop.pickup.toLowerCase()}.`)
       cards.push({ type: 'booking', data: db.toBookingData(b) })
     }
   }
@@ -293,6 +291,12 @@ function bookNamed([, name, day, from, to], now) {
   }
   const b = db.createBooking(r.id, start, end)
   const slot = { start, end }
+  if (r.type === 'laptop') {
+    return {
+      reply: `Request sent for ${r.name}, ${when(slot)}. The help desk will approve it shortly and I'll let you know. You'll collect it from the ${r.pickup.toLowerCase()}.`,
+      cards: [{ type: 'booking', data: db.toBookingData(b) }],
+    }
+  }
   return {
     reply: [`Done! ${r.name} is yours ${when(slot)}.`, peakNote(start)].filter(Boolean).join(' '),
     cards: [{ type: 'booking', data: db.toBookingData(b) }],
@@ -315,6 +319,19 @@ function myBookings(now) {
 }
 
 // ---------- books ----------
+
+function reserveBook(book) {
+  const hold = db.reserveBook(book.book_id)
+  const card = { type: 'book_reserved', data: hold }
+  if (hold.already) return { reply: `You've already reserved ${book.title}. It's in My bookings.`, cards: [card] }
+  return {
+    reply:
+      hold.status === 'ready'
+        ? `Done! ${book.title} is reserved for you. Collect it from the ${hold.collect_from.toLowerCase()} by ${shortDate(new Date(hold.collect_by))}.`
+        : `All copies of ${book.title} are out, so I've put you on the waiting list. One is due back ${shortDate(new Date(hold.available_from))} and it'll be held for you.`,
+    cards: [card],
+  }
+}
 
 function bookQuery(t) {
   const title = db.books.find((b) => t.includes(b.title.toLowerCase()))

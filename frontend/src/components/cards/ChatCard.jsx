@@ -4,7 +4,7 @@ import BooksCard from './BooksCard'
 import BusynessCard from './BusynessCard'
 import CancelledCard from './CancelledCard'
 import MyBookingsCard from './MyBookingsCard'
-import PassCard from './PassCard'
+import BookReservedCard from './BookReservedCard'
 import PeakTimesCard from './PeakTimesCard'
 import RoomStatusCard from './RoomStatusCard'
 
@@ -12,7 +12,7 @@ import RoomStatusCard from './RoomStatusCard'
 const CARDS = {
   busyness: BusynessCard,
   peak_times: PeakTimesCard,
-  library_pass: PassCard,
+  book_reserved: BookReservedCard,
   availability: AvailabilityCard,
   booking: BookingCard,
   books: BooksCard,

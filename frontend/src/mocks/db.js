@@ -87,17 +87,52 @@ const bookings = (() => {
       }
     }
   })
-  // Alex's example booking, so the Bookings tab isn't empty on first load
-  const tomorrow = addDays(today, 1)
-  out.push({ id: newId(), resource_id: 'r4', student_id: STUDENT.id, starts_at: at(tomorrow, 15), ends_at: at(tomorrow, 17), status: 'active' })
   return out
 })()
 
-// Books Alex has out on loan
-export const loans = [{ book_id: 'b2', due: addDays(startOfDay(new Date()), 14) }].map((l) => ({
-  ...books.find((b) => b.book_id === l.book_id),
-  due: l.due,
-}))
+// ---------- book reservations ----------
+
+export const COLLECT_FROM = 'Reservations shelf, floor 1'
+const HOLD_DAYS = 3
+
+// Alex starts with nothing reserved; reserving in chat adds to this
+const bookHolds = []
+
+// A copy on the shelf is held for collection; if they're all out, join the waiting list
+export function reserveBook(bookId) {
+  const book = books.find((b) => b.book_id === bookId)
+  const existing = bookHolds.find((h) => h.book_id === bookId && h.status !== 'cancelled')
+  if (existing) return { ...toHoldData(existing), already: true }
+  const today = startOfDay(new Date())
+  const hold = book.copies_available
+    ? { id: newId(), book_id: bookId, status: 'ready', collect_by: addDays(today, HOLD_DAYS) }
+    : { id: newId(), book_id: bookId, status: 'waiting', available_from: new Date(book.due_back) }
+  if (hold.status === 'ready') book.copies_available--
+  bookHolds.push(hold)
+  return toHoldData(hold)
+}
+
+export function cancelBookHold(id) {
+  const hold = bookHolds.find((h) => h.id === id && h.status !== 'cancelled')
+  if (!hold) return null
+  if (hold.status === 'ready') books.find((b) => b.book_id === hold.book_id).copies_available++
+  hold.status = 'cancelled'
+  return toHoldData(hold)
+}
+
+export const myBookHolds = () => bookHolds.filter((h) => h.status !== 'cancelled').map(toHoldData)
+
+function toHoldData(h) {
+  const book = books.find((b) => b.book_id === h.book_id)
+  return {
+    hold_id: h.id,
+    status: h.status,
+    collect_from: COLLECT_FROM,
+    collect_by: h.collect_by?.toISOString(),
+    available_from: h.available_from?.toISOString(),
+    book: { ...book },
+  }
+}
 
 export const getResource = (id) => resources.find((r) => r.id === id)
 
@@ -151,8 +186,28 @@ export function roomStatus(now) {
     })
 }
 
+// ---------- laptop requests ----------
+
+// Laptops are requested, then the help desk approves them. The mock approves
+// after this long, then tells whoever is listening (App posts it in the chat).
+export const LAPTOP_APPROVAL_MS = 90 * 1000
+const listeners = new Set()
+export const onLaptopApproved = (fn) => (listeners.add(fn), () => listeners.delete(fn))
+
+function scheduleApproval(b) {
+  setTimeout(() => {
+    if (b.status !== 'active') return
+    b.approval = 'approved'
+    listeners.forEach((fn) => fn(toBookingData(b)))
+  }, LAPTOP_APPROVAL_MS)
+}
+
 export function createBooking(resourceId, start, end) {
   const b = { id: newId(), resource_id: resourceId, student_id: STUDENT.id, starts_at: start, ends_at: end, status: 'active' }
+  if (getResource(resourceId).type === 'laptop') {
+    b.approval = 'requested'
+    scheduleApproval(b)
+  }
   bookings.push(b)
   return b
 }
@@ -164,6 +219,7 @@ export function cancelBooking(idPrefix) {
 }
 
 export const isCancelled = (id) => bookings.find((b) => b.id === id)?.status === 'cancelled'
+export const approvalOf = (id) => bookings.find((b) => b.id === id)?.approval
 
 export function myBookings(now) {
   return bookings
@@ -182,6 +238,7 @@ export function toBookingData(b) {
     capacity: r.capacity,
     features: r.features,
     pickup: r.pickup,
+    approval: b.approval,
     starts_at: b.starts_at.toISOString(),
     ends_at: b.ends_at.toISOString(),
   }

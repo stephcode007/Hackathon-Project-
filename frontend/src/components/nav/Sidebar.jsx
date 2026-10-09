@@ -1,4 +1,4 @@
-import { Wordmark } from '../brand/Blueberry'
+import { Wordmark } from '../brand/Logo'
 import Icon from '../Icon'
 import { STUDENT } from '../../mocks/db'
 import { TABS } from './tabs'

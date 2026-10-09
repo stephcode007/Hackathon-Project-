@@ -1,4 +1,4 @@
-import Blueberry from '../components/brand/Blueberry'
+import BookmarkMark from '../components/brand/Logo'
 import MessageInput from '../components/chat/MessageInput'
 import MessageList from '../components/chat/MessageList'
 import { STUDENT } from '../mocks/db'
@@ -11,7 +11,7 @@ export default function ChatPage({ messages, sending, onSend }) {
           {messages.length === 0 ? (
             <div className="flex min-h-full flex-col items-center justify-center px-6 py-10 text-center">
               <h1 className="flex items-center gap-3 font-display text-[28px] leading-tight font-semibold lg:text-4xl">
-                <Blueberry size="1.1em" />
+                <BookmarkMark size="1.1em" />
                 Hi {STUDENT.name}
               </h1>
               <p className="mt-2 text-sm text-muted lg:text-base">What can I help you with today?</p>
