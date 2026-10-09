@@ -1,108 +1,119 @@
 import { useState } from 'react'
-import BusynessMeter from '../components/cards/BusynessMeter'
-import LevelBadge from '../components/cards/LevelBadge'
-import { demoNow, hhmm, relativeDay, shortDate } from '../lib/time'
-import { cancelBooking, liveBusyness, loans, myBookings, toBookingData } from '../mocks/db'
-import BookingDetail from './BookingDetail'
+import Icon from '../components/Icon'
+import { demoNow } from '../lib/time'
+import { books, cancelBookHold, cancelBooking, liveBusyness, myBookHolds, myBookings, resources, statusAt, toBookingData } from '../mocks/db'
+import BookingDetail from './bookings/BookingDetail'
+import BookPreview from './bookings/BookPreview'
+import Books from './bookings/Books'
+import Laptops from './bookings/Laptops'
+import MyBookings from './bookings/MyBookings'
+import { List } from './bookings/shared'
+import StudySpaces from './bookings/StudySpaces'
 
-const TYPE_LABEL = { room: 'Room', desk: 'Desk', laptop: 'Laptop' }
-
-function Section({ title, children }) {
+function MenuRow({ icon, title, detail, onClick }) {
   return (
-    <section className="mb-5">
-      <h2 className="mb-2 px-1 text-xs font-semibold tracking-wide text-muted uppercase">{title}</h2>
-      {children}
-    </section>
+    <li>
+      <button onClick={onClick} className="flex w-full items-center gap-3 py-3.5 text-left">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+          <Icon name={icon} size={20} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{title}</span>
+          <span className="block text-xs text-muted">{detail}</span>
+        </span>
+        <Icon name="chevron" size={18} className="shrink-0 text-muted" />
+      </button>
+    </li>
   )
 }
 
+// The Bookings section: a home screen with My bookings, Study spaces and Laptops,
+// and the pages behind them. `view` is which page is showing.
 export default function BookingsPage() {
-  const [openId, setOpenId] = useState(null)
+  const [view, setView] = useState({ page: 'home' })
+  const go = (page, id) => setView({ page, id })
   const now = demoNow()
-  const live = liveBusyness(now)
-  const mine = myBookings(now).map(toBookingData)
-  const open = mine.find((b) => b.booking_id === openId)
 
-  if (open) {
-    return (
-      <div className="no-scrollbar h-full overflow-y-auto px-4 pt-2 pb-6">
-        <BookingDetail
-          booking={open}
-          onBack={() => setOpenId(null)}
-          onCancel={(b) => {
-            cancelBooking(b.booking_id)
-            setOpenId(null)
-          }}
-        />
-      </div>
-    )
+  const page = (() => {
+    switch (view.page) {
+      case 'mine':
+        return (
+          <MyBookings
+            onBack={() => go('home')}
+            onOpenBooking={(id) => go('booking', id)}
+            onOpenBook={(id) => go('book', id)}
+            onExplore={(p) => go(p)}
+          />
+        )
+      case 'booking': {
+        const b = myBookings(now).map(toBookingData).find((x) => x.booking_id === view.id)
+        if (!b) return null
+        return (
+          <BookingDetail
+            booking={b}
+            onBack={() => go('mine')}
+            onCancel={() => {
+              cancelBooking(b.booking_id)
+              go('mine')
+            }}
+          />
+        )
+      }
+      case 'book': {
+        const h = myBookHolds().find((x) => x.hold_id === view.id)
+        if (!h) return null
+        return (
+          <BookPreview
+            hold={h}
+            onBack={() => go('mine')}
+            onCancel={() => {
+              cancelBookHold(h.hold_id)
+              go('mine')
+            }}
+          />
+        )
+      }
+      // After booking from a list, show the new booking straight away
+      case 'spaces':
+        return <StudySpaces onBack={() => go('home')} onBooked={(id) => go('booking', id)} />
+      case 'laptops':
+        return <Laptops onBack={() => go('home')} onBooked={(id) => go('booking', id)} />
+      case 'books':
+        return <Books onBack={() => go('home')} onReserved={(id) => go('book', id)} />
+      default:
+        return null
+    }
+  })()
+
+  if (page) {
+    return <div className="no-scrollbar h-full overflow-y-auto px-4 pt-2 pb-6">{page}</div>
   }
 
+  const live = liveBusyness(now)
+  const busy = live.level === 'busy' || live.level === 'very_busy'
+  const count = myBookings(now).length + myBookHolds().length
+  const freeOf = (type) => resources.filter((r) => r.type === type && statusAt(r.id, now).free).length
+  const booksIn = books.filter((b) => b.copies_available > 0).length
+
   return (
-    <div className="no-scrollbar h-full overflow-y-auto px-4 pt-5 pb-6">
+    <div className="no-scrollbar flex h-full flex-col overflow-y-auto px-4 pt-2 pb-6">
       <h1 className="mb-4 px-1 font-display text-2xl font-semibold">Bookings</h1>
 
-      <div className="mb-5 rounded-2xl border border-line bg-white p-4">
-        <div className="mb-2.5 flex items-center justify-between">
-          <div>
-            <div className="text-xs text-muted">Library capacity</div>
-            <div className="text-sm">
-              <b className="text-base">{live.people}</b> <span className="text-muted">of {live.capacity} seats</span>
-            </div>
-          </div>
-          <LevelBadge level={live.level} />
-        </div>
-        <BusynessMeter percent={live.percent} level={live.level} />
+      <List>
+        <MenuRow icon="calendar" title="My bookings" detail={count ? `${count} active` : 'Nothing booked yet'} onClick={() => go('mine')} />
+        <MenuRow icon="users" title="Study spaces" detail={`${freeOf('room')} free right now`} onClick={() => go('spaces')} />
+        <MenuRow icon="book" title="Books" detail={`Search ${books.length} books · ${booksIn} on the shelf`} onClick={() => go('books')} />
+        <MenuRow icon="laptop" title="Laptops" detail={`${freeOf('laptop')} available to request`} onClick={() => go('laptops')} />
+      </List>
+
+      {/* Small and quiet at the bottom: green when there's room, red when it's busy */}
+      <div className="mt-auto flex items-center justify-center gap-2 pt-6 text-xs text-muted">
+        <span className={`h-2 w-2 rounded-full ${busy ? 'bg-very-busy' : 'bg-quiet'}`} />
+        <span className={`font-semibold ${busy ? 'text-very-busy' : 'text-quiet'}`}>{busy ? 'Busy right now' : 'Not busy right now'}</span>
+        <span>
+          · {live.people} of {live.capacity} seats taken
+        </span>
       </div>
-
-      <Section title="Your bookings">
-        {mine.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-sm text-muted">
-            Nothing booked. Ask in Chat and it'll show up here.
-          </p>
-        ) : (
-          <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
-            {mine.map((b) => {
-              const s = new Date(b.starts_at)
-              return (
-                <li key={b.booking_id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">{b.resource_name}</div>
-                    <div className="text-xs text-muted">
-                      {TYPE_LABEL[b.resource_type]} · {relativeDay(s)} · {hhmm(s)}–{hhmm(new Date(b.ends_at))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setOpenId(b.booking_id)}
-                    className="shrink-0 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent hover:text-white"
-                  >
-                    View my booking
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="Your books">
-        <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
-          {loans.map((l) => (
-            <li key={l.book_id} className="flex items-center gap-3 py-3">
-              <img
-                src={`https://covers.openlibrary.org/b/isbn/${l.isbn}-M.jpg`}
-                alt=""
-                className="h-[60px] w-10 shrink-0 rounded bg-stone-100 object-cover shadow-sm"
-              />
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{l.title}</div>
-                <div className="truncate text-xs text-muted">{l.author}</div>
-                <div className="mt-0.5 text-xs font-semibold text-accent">Due {shortDate(l.due)}</div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Section>
     </div>
   )
 }

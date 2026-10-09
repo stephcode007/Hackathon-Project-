@@ -1,7 +1,7 @@
-import Features from '../components/cards/Features'
-import Icon from '../components/Icon'
-import { downloadIcs } from '../lib/ics'
-import { hhmm, relativeDay, shortDate } from '../lib/time'
+import Features from '../../components/cards/Features'
+import Icon from '../../components/Icon'
+import { downloadIcs } from '../../lib/ics'
+import { hhmm, relativeDay, shortDate } from '../../lib/time'
 
 const TYPE_LABEL = { room: 'Room booking', desk: 'Desk booking', laptop: 'Laptop loan' }
 const ZONE_LABEL = { group: 'Group study', silent: 'Silent zone', quiet: 'Quiet zone' }
@@ -27,12 +27,22 @@ export default function BookingDetail({ booking: b, onBack, onCancel }) {
   return (
     <div className="flex min-h-full flex-col">
       <button onClick={onBack} className="mb-3 flex items-center gap-1.5 self-start px-1 text-sm font-semibold text-muted hover:text-ink">
-        <Icon name="back" size={17} /> Bookings
+        <Icon name="back" size={17} /> My bookings
       </button>
 
       <div className="rounded-2xl border border-line bg-white p-4">
         <div className="text-[11px] font-semibold tracking-wide text-muted uppercase">{TYPE_LABEL[b.resource_type]}</div>
         <h1 className="font-display text-2xl leading-tight font-semibold">{b.resource_name}</h1>
+        {b.approval && (
+          <div
+            className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              b.approval === 'requested' ? 'bg-moderate/15 text-moderate' : 'bg-quiet/12 text-quiet'
+            }`}
+          >
+            <Icon name={b.approval === 'requested' ? 'clock' : 'check'} size={13} strokeWidth={2.4} />
+            {b.approval === 'requested' ? 'Requested · waiting for approval' : 'Request approved'}
+          </div>
+        )}
 
         <div className="mt-2 divide-y divide-line">
           <Row icon="calendar" label="Date">
@@ -66,7 +76,7 @@ export default function BookingDetail({ booking: b, onBack, onCancel }) {
         onClick={() => onCancel(b)}
         className="mt-auto w-full rounded-2xl border border-very-busy/30 bg-white py-3 text-sm font-semibold text-very-busy transition hover:bg-very-busy/5 active:scale-[0.99]"
       >
-        Cancel booking
+        {b.approval === 'requested' ? 'Cancel request' : 'Cancel booking'}
       </button>
     </div>
   )

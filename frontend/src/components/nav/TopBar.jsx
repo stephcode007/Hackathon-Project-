@@ -1,4 +1,4 @@
-import { Wordmark } from '../brand/Blueberry'
+import { Wordmark } from '../brand/Logo'
 import ProfileButton from './ProfileButton'
 
 // Phone header shared by every tab. It blends into the page (no border) and

@@ -1,6 +1,6 @@
 import { downloadIcs } from '../../lib/ics'
 import { hhmm, relativeDay } from '../../lib/time'
-import { isCancelled } from '../../mocks/db'
+import { approvalOf, isCancelled } from '../../mocks/db'
 import Icon from '../Icon'
 import Card from './Card'
 import Features from './Features'
@@ -12,17 +12,28 @@ export default function BookingCard({ data, onAction }) {
   const start = new Date(starts_at)
   const end = new Date(ends_at)
   const cancelled = isCancelled(booking_id)
+  // laptops: 'requested' until the help desk approves, then 'approved'
+  const pending = !cancelled && approvalOf(booking_id) === 'requested'
+  const label = cancelled
+    ? 'Cancelled'
+    : resource_type === 'laptop'
+      ? pending
+        ? 'Laptop requested · waiting for approval'
+        : 'Laptop request approved'
+      : `${TYPE_LABEL[resource_type]} booked`
 
   return (
     <Card className={cancelled ? 'opacity-60' : ''}>
       <div className="flex items-start gap-3">
-        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${cancelled ? 'bg-stone-100 text-muted' : 'bg-quiet/15 text-quiet'}`}>
-          <Icon name={cancelled ? 'x' : 'check'} size={20} strokeWidth={2.4} />
+        <div
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
+            cancelled ? 'bg-stone-100 text-muted' : pending ? 'bg-moderate/15 text-moderate' : 'bg-quiet/15 text-quiet'
+          }`}
+        >
+          <Icon name={cancelled ? 'x' : pending ? 'clock' : 'check'} size={20} strokeWidth={2.4} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold tracking-wide text-muted uppercase">
-            {cancelled ? 'Cancelled' : `${TYPE_LABEL[resource_type]} booked`}
-          </div>
+          <div className="text-[11px] font-semibold tracking-wide text-muted uppercase">{label}</div>
           <div className={`font-display text-lg leading-tight font-semibold ${cancelled ? 'line-through' : ''}`}>{resource_name}</div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { TABS } from './tabs'
 export default function BottomNav({ tab, onChange }) {
   return (
     <nav className="shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-2">
         {TABS.map((t) => {
           const active = tab === t.id
           return (
