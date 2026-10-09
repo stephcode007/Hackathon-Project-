@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { visibleCards } from '../../lib/cards'
 import ChatCard from '../cards/ChatCard'
 
 function Typing() {
@@ -29,7 +30,7 @@ export default function MessageList({ messages, sending, onAction }) {
             {m.content && (
               <div className="w-fit max-w-[88%] rounded-2xl rounded-bl-md bg-white px-4 py-2.5 text-sm shadow-sm">{m.content}</div>
             )}
-            {m.cards?.map((c, j) => (
+            {visibleCards(m.cards).map((c, j) => (
               <ChatCard key={j} card={c} onAction={onAction} />
             ))}
           </div>
