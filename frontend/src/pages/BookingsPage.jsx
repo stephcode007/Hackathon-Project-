@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { cancelBook, cancelSpace, loadMyBookings } from '../lib/bookings'
-import { demoNow } from '../lib/time'
-import { liveBusyness } from '../mocks/db'
 import BookingDetail from './bookings/BookingDetail'
 import BookPreview from './bookings/BookPreview'
 import MyBookings from './bookings/MyBookings'
@@ -12,7 +10,6 @@ export default function BookingsPage({ onGoChat }) {
   const [open, setOpen] = useState(null) // { kind: 'booking' | 'book', id }
   const [mine, setMine] = useState(null) // { bookings, reservations }, null while loading
   const [failed, setFailed] = useState(false)
-  const now = demoNow()
 
   // Reloads every time the Bookings tab is opened, so anything just booked in Chat shows up
   async function reload() {
@@ -66,8 +63,8 @@ export default function BookingsPage({ onGoChat }) {
 
   if (page) return <div className="no-scrollbar h-full overflow-y-auto px-4 pt-2 pb-6">{page}</div>
 
-  const live = liveBusyness(now)
-  const busy = live.level === 'busy' || live.level === 'very_busy'
+  const live = mine?.busyness
+  const busy = live?.level === 'busy' || live?.level === 'very_busy'
 
   return (
     <div className="no-scrollbar flex h-full flex-col overflow-y-auto px-4 pt-2 pb-6">
@@ -82,13 +79,15 @@ export default function BookingsPage({ onGoChat }) {
       />
 
       {/* Small and quiet at the bottom: green when there's room, red when it's busy */}
-      <div className="mt-auto flex items-center justify-center gap-2 pt-6 text-xs text-muted">
-        <span className={`h-2 w-2 rounded-full ${busy ? 'bg-very-busy' : 'bg-quiet'}`} />
-        <span className={`font-semibold ${busy ? 'text-very-busy' : 'text-quiet'}`}>{busy ? 'Busy right now' : 'Not busy right now'}</span>
-        <span>
-          · {live.people} of {live.capacity} seats taken
-        </span>
-      </div>
+      {live && (
+        <div className="mt-auto flex items-center justify-center gap-2 pt-6 text-xs text-muted">
+          <span className={`h-2 w-2 rounded-full ${busy ? 'bg-very-busy' : 'bg-quiet'}`} />
+          <span className={`font-semibold ${busy ? 'text-very-busy' : 'text-quiet'}`}>{busy ? 'Busy right now' : 'Not busy right now'}</span>
+          <span>
+            · {live.people} of {live.capacity} seats taken
+          </span>
+        </div>
+      )}
     </div>
   )
 }

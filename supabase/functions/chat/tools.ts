@@ -385,7 +385,108 @@ async function cancelBooking({ booking_id }, studentId) {
   return { booking_id: b.id, resource_name: b.resources.name };
 }
 
+// ---------- busyness ----------
+
+// Seats in the library (README: set this to the real seat count)
+const CAPACITY = 600;
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const percentOf = (people) => Math.round((people / CAPACITY) * 100);
+const levelFor = (percent) =>
+  percent < 40 ? "quiet" : percent < 70 ? "moderate" : percent < 90 ? "busy" : "very_busy";
+const weekdayOf = (date) => new Date(`${date}T12:00:00Z`).getUTCDay();
+
+// typical_busyness for one weekday as { hour: avg_people }
+async function typicalHours(weekday) {
+  const { data, error } = await supabase.from("typical_busyness").select("hour, avg_people").eq("weekday", weekday);
+  if (error) throw error;
+  return Object.fromEntries(data.map((r) => [r.hour, r.avg_people]));
+}
+
+const busynessData = (people, isLive, at, typical) => ({
+  is_live: isLive,
+  people,
+  capacity: CAPACITY,
+  percent: percentOf(people),
+  level: levelFor(percentOf(people)),
+  as_of: isoCampus(at),
+  typical_now: typical,
+});
+
+// No inputs: live headcount from gate scans. With a date and/or time: how busy it usually is then.
+async function getBusyness({ date, time }) {
+  try {
+    const now = new Date();
+    const today = campus(now);
+    if (!date && !time) {
+      const { data: people, error } = await supabase.rpc("people_inside", { tz: TZ });
+      if (error) throw error;
+      const typical = (await typicalHours(weekdayOf(today.date)))[Math.floor(today.minutes / 60)] ?? 0;
+      return busynessData(people, true, now, typical);
+    }
+
+    const day = date ?? today.date;
+    const at = time ?? today.time;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{1,2}:\d{2}$/.test(at)) return { error: "I couldn't read that date or time." };
+    const hour = Number(at.split(":")[0]);
+    if (hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
+      return { error: `The library is closed then. It's open ${pad(OPEN_HOUR)}:00–${CLOSE_HOUR}:00.` };
+    }
+    const typical = (await typicalHours(weekdayOf(day)))[hour] ?? 0;
+    return busynessData(typical, false, fromCampus(day, `${pad(hour)}:00`), typical);
+  } catch (err) {
+    console.error("get_busyness failed", err);
+    return { error: "I can't check how busy it is right now. Please try again in a moment." };
+  }
+}
+
+// [12, 13, 14, 19] -> "12:00–15:00 & 19:00–20:00"
+function hourRanges(hours) {
+  const ranges = [];
+  for (const h of hours) {
+    const last = ranges[ranges.length - 1];
+    if (last && last[1] === h) last[1] = h + 1;
+    else ranges.push([h, h + 1]);
+  }
+  return ranges.map(([a, b]) => `${pad(a)}:00–${pad(b)}:00`).join(" & ");
+}
+
+async function getPeakTimes({ day }) {
+  const today = campus(new Date());
+  const date = day ?? today.date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "I couldn't read that date." };
+  try {
+    const typical = await typicalHours(weekdayOf(date));
+    const hours = [];
+    for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) {
+      const avg = typical[h] ?? 0;
+      hours.push({ hour: h, avg_people: avg, level: levelFor(percentOf(avg)) });
+    }
+    const max = Math.max(...hours.map((h) => h.avg_people));
+    if (max === 0) return { error: "There isn't enough visit history yet to work out peak times." };
+
+    const quietest = [...hours].sort((a, b) => a.avg_people - b.avg_people);
+    return {
+      day: WEEKDAYS[weekdayOf(date)],
+      date,
+      is_today: date === today.date,
+      now_hour: Math.floor(today.minutes / 60),
+      // busiest hours: within 15% of the day's maximum; quietest: under 40% of it
+      peak: hourRanges(hours.filter((h) => h.avg_people >= max * 0.85).map((h) => h.hour)),
+      quietest:
+        hourRanges(hours.filter((h) => h.avg_people <= max * 0.4).map((h) => h.hour)) ||
+        hourRanges(quietest.slice(0, 2).map((h) => h.hour).sort((a, b) => a - b)),
+      hours,
+    };
+  } catch (err) {
+    console.error("get_peak_times failed", err);
+    return { error: "I can't load the peak times right now. Please try again in a moment." };
+  }
+}
+
 export const TOOLS = {
+  get_busyness: getBusyness,
+  get_peak_times: getPeakTimes,
   search_books: searchBooks,
   reserve_book: reserveBook,
   get_my_reservations: getMyReservations,

@@ -1,6 +1,6 @@
 // Bookings page API: everything the student has booked, without going through Claude.
 // Reuses the chat tools so the page and the chat always agree.
-//   { action: "list" }                         -> { bookings: [...], reservations: [...] }
+//   { action: "list" }                         -> { bookings: [...], reservations: [...], busyness }
 //   { action: "cancel_booking", id }           -> { booking_id, resource_name }
 //   { action: "cancel_reservation", id }       -> { hold_id, title }
 import { TOOLS } from "../chat/tools.ts";
@@ -26,12 +26,17 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "list") {
-      const [spaces, books] = await Promise.all([
+      const [spaces, books, busyness] = await Promise.all([
         TOOLS.get_my_bookings({}, student_id),
         TOOLS.get_my_reservations({}, student_id),
+        TOOLS.get_busyness({}),
       ]);
       if (books.error) return json({ error: books.error }, 500);
-      return json({ bookings: spaces.bookings, reservations: books.reservations });
+      return json({
+        bookings: spaces.bookings,
+        reservations: books.reservations,
+        busyness: "error" in busyness ? null : busyness, // the page hides the busyness line when null
+      });
     }
 
     let result;

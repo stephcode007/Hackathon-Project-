@@ -5,6 +5,12 @@ export function toCards(toolName, output) {
   if (!output || output.error) return [];
 
   switch (toolName) {
+    case "get_busyness":
+      return [{ type: "busyness", data: output }];
+
+    case "get_peak_times":
+      return [{ type: "peak_times", data: output }];
+
     case "search_books":
       if (output.results.length === 0) return [];
       return [{
