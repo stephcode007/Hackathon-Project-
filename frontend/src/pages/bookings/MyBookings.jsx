@@ -1,15 +1,30 @@
 import { Cover } from '../../components/cards/BooksCard'
 import Icon from '../../components/Icon'
-import { demoNow, hhmm, relativeDay, shortDate } from '../../lib/time'
-import { myBookHolds, myBookings, toBookingData } from '../../mocks/db'
+import { hhmm, relativeDay, shortDate } from '../../lib/time'
 import { List, PageHeader, Section } from './shared'
 
 const TYPE_LABEL = { room: 'Room', desk: 'Desk', laptop: 'Laptop' }
 
 // Everything Alex has booked. Tap a booking or a book to see it.
-export default function MyBookings({ onOpenBooking, onOpenBook, onGoChat }) {
-  const spaces = myBookings(demoNow()).map(toBookingData)
-  const books = myBookHolds()
+// spaces / books are undefined while loading
+export default function MyBookings({ spaces, books, failed, onRetry, onOpenBooking, onOpenBook, onGoChat }) {
+  if (failed || !spaces || !books) {
+    return (
+      <>
+        <PageHeader title="Bookings" />
+        {failed ? (
+          <div className="rounded-2xl border border-dashed border-line px-6 py-10 text-center">
+            <div className="text-sm font-semibold">Couldn't load your bookings</div>
+            <button onClick={onRetry} className="mt-4 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white active:scale-95">
+              Try again
+            </button>
+          </div>
+        ) : (
+          <p className="px-1 text-sm text-muted">Loading your bookings…</p>
+        )}
+      </>
+    )
+  }
 
   return (
     <>

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { cancelBook, cancelSpace, loadMyBookings } from '../lib/bookings'
 import { demoNow } from '../lib/time'
-import { cancelBookHold, cancelBooking, liveBusyness, myBookHolds, myBookings, toBookingData } from '../mocks/db'
+import { liveBusyness } from '../mocks/db'
 import BookingDetail from './bookings/BookingDetail'
 import BookPreview from './bookings/BookPreview'
 import MyBookings from './bookings/MyBookings'
@@ -9,35 +10,55 @@ import MyBookings from './bookings/MyBookings'
 // Booking itself happens in Chat.
 export default function BookingsPage({ onGoChat }) {
   const [open, setOpen] = useState(null) // { kind: 'booking' | 'book', id }
+  const [mine, setMine] = useState(null) // { bookings, reservations }, null while loading
+  const [failed, setFailed] = useState(false)
   const now = demoNow()
+
+  // Reloads every time the Bookings tab is opened, so anything just booked in Chat shows up
+  async function reload() {
+    try {
+      setMine(await loadMyBookings())
+      setFailed(false)
+    } catch (err) {
+      console.warn('Could not load bookings', err)
+      setFailed(true)
+    }
+  }
+  useEffect(() => {
+    reload()
+  }, [])
+
   const back = () => setOpen(null)
+  async function cancelAndBack(cancel, id) {
+    try {
+      await cancel(id)
+    } catch (err) {
+      console.warn('Cancel failed', err)
+    }
+    back()
+    reload()
+  }
 
   let page = null
   if (open?.kind === 'booking') {
-    const b = myBookings(now).map(toBookingData).find((x) => x.booking_id === open.id)
+    const b = mine?.bookings.find((x) => x.booking_id === open.id)
     if (b) {
       page = (
         <BookingDetail
           booking={b}
           onBack={back}
-          onCancel={() => {
-            cancelBooking(b.booking_id)
-            back()
-          }}
+          onCancel={() => cancelAndBack(cancelSpace, b.booking_id)}
         />
       )
     }
   } else if (open?.kind === 'book') {
-    const h = myBookHolds().find((x) => x.hold_id === open.id)
+    const h = mine?.reservations.find((x) => x.hold_id === open.id)
     if (h) {
       page = (
         <BookPreview
           hold={h}
           onBack={back}
-          onCancel={() => {
-            cancelBookHold(h.hold_id)
-            back()
-          }}
+          onCancel={() => cancelAndBack(cancelBook, h.hold_id)}
         />
       )
     }
@@ -51,6 +72,10 @@ export default function BookingsPage({ onGoChat }) {
   return (
     <div className="no-scrollbar flex h-full flex-col overflow-y-auto px-4 pt-2 pb-6">
       <MyBookings
+        spaces={mine?.bookings}
+        books={mine?.reservations}
+        failed={failed}
+        onRetry={reload}
         onOpenBooking={(id) => setOpen({ kind: 'booking', id })}
         onOpenBook={(id) => setOpen({ kind: 'book', id })}
         onGoChat={onGoChat}
