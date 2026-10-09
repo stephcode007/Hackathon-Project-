@@ -11,6 +11,7 @@ export const STUDENT = {
   course: 'BSc Computer Science',
   year: 2,
   number: '20261001',
+  email: 'alex.morgan@student.example.ac.uk',
   qr: 'stacks:demo-student-001',
 }
 
@@ -75,8 +76,17 @@ const bookings = (() => {
       }
     }
   })
+  // Alex's example booking, so the Bookings tab isn't empty on first load
+  const tomorrow = addDays(today, 1)
+  out.push({ id: newId(), resource_id: 'r4', student_id: STUDENT.id, starts_at: at(tomorrow, 15), ends_at: at(tomorrow, 17), status: 'active' })
   return out
 })()
+
+// Books Alex has out on loan
+export const loans = [{ book_id: 'b2', due: addDays(startOfDay(new Date()), 14) }].map((l) => ({
+  ...books.find((b) => b.book_id === l.book_id),
+  due: l.due,
+}))
 
 export const getResource = (id) => resources.find((r) => r.id === id)
 
