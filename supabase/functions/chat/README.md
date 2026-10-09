@@ -44,6 +44,7 @@ Safety behaviour in `agent.ts`:
 - The caller's `messages` array is copied, not mutated.
 - A tool that throws returns `{ error: "Something went wrong on our side. Please try again in a moment." }` to Claude and logs the real error.
 - An unknown tool name returns `{ error: "Unknown tool: <name>" }`.
+- **Only tools present in `TOOLS` (tools.ts) are offered to Claude** (`AVAILABLE_TOOL_SCHEMAS`). A tool is switched on by adding it to `TOOLS` in `tools.ts` (its schema already exists in `toolSchemas.ts`); no change in `agent.ts` is needed. Until then Claude tells the student it can't do that yet instead of hitting an error.
 - If Claude returns no text, the reply falls back to "Sorry, I didn't catch that. Could you rephrase?".
 - Model: `CLAUDE_MODEL` secret, default `claude-sonnet-5-5`. `max_tokens: 1024`.
 
