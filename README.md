@@ -1,8 +1,6 @@
-# Stacks 📚
+# Bookmarked 📚
 
 **Your library, by chat.** An AI assistant that lets students book study rooms, find books, borrow laptops and reserve desks just by asking. It also tells you how busy the library is and when the quiet times are, and it carries your library pass so you can scan in without leaving the app.
-
-> "Stacks" is a working name. Swap it once the branding is final.
 
 ---
 
@@ -20,13 +18,13 @@ One app with one chat box. A student can type:
 > "When's it usually quiet on Thursdays?"
 > "Book me a desk with a plug at 4 tomorrow, and find me *Clean Code*."
 
-Stacks answers with live data and books things for you. The answers come back as cards in the chat: a busyness meter, a popular-times chart, a booking confirmation. When you get to the library, you tap **Library pass** and scan your QR code at the gate.
+Bookmarked answers with live data and books things for you. The answers come back as cards in the chat: a busyness meter, a popular-times chart, a booking confirmation. When you get to the library, you tap **Library pass** and scan your QR code at the gate.
 
 Every scan in and out is counted. That count is what powers "how busy is it?", and over time it builds up the library's peak times.
 
 ### Design decision: no dashboard
 
-Stacks is an assistant, not a dashboard. Busyness and peak times aren't on a permanent screen. You ask, and the answer appears as a card in the chat. This keeps the app simple and lets the AI combine information. For example, if you try to book a desk at 2pm, it can point out that 2pm is peak time and offer 4pm instead.
+Bookmarked is an assistant, not a dashboard. Busyness and peak times aren't on a permanent screen. You ask, and the answer appears as a card in the chat. This keeps the app simple and lets the AI combine information. For example, if you try to book a desk at 2pm, it can point out that 2pm is peak time and offer 4pm instead.
 
 The one thing that is always on screen is the **Library pass** button, because at the gate you need your QR code instantly, not after typing a message.
 
@@ -118,7 +116,7 @@ Jack: trim this to fit the time limit. Steps 1, 3, 5 and 6 are the essentials.
 
 Edge Function files end in `.ts`, but you can write plain JavaScript inside them. Deno doesn't need a build step.
 
-The gate page lives in the same React app, opened with `?mode=gate` (e.g. `https://stacks.vercel.app/?mode=gate`). `App.jsx` checks the query string, so no router and no Vercel rewrite rules are needed.
+The gate page lives in the same React app, opened with `?mode=gate` (e.g. `https://bookmarked.vercel.app/?mode=gate`). `App.jsx` checks the query string, so no router and no Vercel rewrite rules are needed.
 
 ---
 

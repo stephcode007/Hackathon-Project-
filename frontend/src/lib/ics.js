@@ -5,9 +5,9 @@ export function downloadIcs({ id, title, location, start, end }) {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Stacks//Library//EN',
+    'PRODID:-//Bookmarked//Library//EN',
     'BEGIN:VEVENT',
-    `UID:${id}@stacks`,
+    `UID:${id}@bookmarked`,
     `DTSTAMP:${stamp(new Date())}`,
     `DTSTART:${stamp(new Date(start))}`,
     `DTEND:${stamp(new Date(end))}`,

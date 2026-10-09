@@ -14,7 +14,7 @@ export default function MessageInput({ onSend, disabled }) {
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Ask Stacks anything…"
+        placeholder="Ask Bookmarked anything…"
         className="min-w-0 flex-1 rounded-full border border-line bg-white px-4 py-2.5 text-sm outline-none placeholder:text-muted focus:border-accent"
       />
       <button

@@ -20,7 +20,7 @@ export default function PassPage() {
           <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-white/10" />
           <div className="absolute top-8 -right-4 h-20 w-20 rounded-full bg-white/10" />
           <div className="relative flex items-center justify-between text-[11px] font-semibold tracking-[0.15em] uppercase opacity-80">
-            <span>Stacks Library</span>
+            <span>Bookmarked Library</span>
             <span>Student</span>
           </div>
           <div className="relative mt-4 flex items-center gap-3">

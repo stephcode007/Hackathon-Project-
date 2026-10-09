@@ -12,7 +12,7 @@ export default function ChatPage({ messages, sending, onSend }) {
           <Icon name="book" size={18} />
         </div>
         <div>
-          <div className="font-display text-lg leading-none font-semibold">Stacks</div>
+          <div className="font-display text-lg leading-none font-semibold">Bookmarked</div>
           <div className="mt-0.5 text-[11px] text-muted">Your library, by chat</div>
         </div>
       </header>
