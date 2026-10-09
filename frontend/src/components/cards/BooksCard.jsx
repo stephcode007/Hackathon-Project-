@@ -31,7 +31,7 @@ export function Availability({ book: b }) {
       </span>
       {b.copies_available > 0 ? (
         <span className="rounded-full bg-quiet/12 px-2 py-0.5 font-semibold text-quiet">
-          {b.copies_available} of {b.copies_total} in
+          {b.copies_total ? `${b.copies_available} of ${b.copies_total}` : b.copies_available} available
         </span>
       ) : (
         <span className="rounded-full bg-very-busy/10 px-2 py-0.5 font-semibold text-very-busy">
