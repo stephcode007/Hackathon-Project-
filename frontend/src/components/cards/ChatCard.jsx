@@ -6,6 +6,7 @@ import CancelledCard from './CancelledCard'
 import MyBookingsCard from './MyBookingsCard'
 import PassCard from './PassCard'
 import PeakTimesCard from './PeakTimesCard'
+import RoomStatusCard from './RoomStatusCard'
 
 // card.type (from the API contract) → component
 const CARDS = {
@@ -17,6 +18,7 @@ const CARDS = {
   books: BooksCard,
   my_bookings: MyBookingsCard,
   cancelled: CancelledCard,
+  room_status: RoomStatusCard,
 }
 
 export default function ChatCard({ card, onAction }) {

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Icon from '../components/Icon'
 import LevelBadge from '../components/cards/LevelBadge'
 import QrPass from '../components/pass/QrPass'
 import { STUDENT, liveBusyness } from '../mocks/db'
@@ -12,15 +11,14 @@ export default function PassPage() {
 
   return (
     <div className="no-scrollbar h-full overflow-y-auto px-5 pt-5 pb-8">
-      <h1 className="font-display text-2xl font-semibold">Library pass</h1>
-      <p className="mb-5 text-sm text-muted">Scan in and out at the gate.</p>
+      <h1 className="mb-5 font-display text-2xl font-semibold">Library pass</h1>
 
       <div className="overflow-hidden rounded-3xl bg-white shadow-[0_10px_30px_-12px_rgba(29,42,38,0.35)]">
         <div className="relative bg-accent px-5 pt-5 pb-6 text-white">
           <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-white/10" />
           <div className="absolute top-8 -right-4 h-20 w-20 rounded-full bg-white/10" />
           <div className="relative flex items-center justify-between text-[11px] font-semibold tracking-[0.15em] uppercase opacity-80">
-            <span>Bookmarked Library</span>
+            <span>Bookmark Library</span>
             <span>Student</span>
           </div>
           <div className="relative mt-4 flex items-center gap-3">
@@ -64,12 +62,7 @@ export default function PassPage() {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-2xl bg-moderate/10 px-4 py-3 text-xs text-ink">
-        <Icon name="sun" size={16} className="shrink-0 text-moderate" />
-        Turn your screen brightness up and hold the code flat to the scanner.
-      </div>
-
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3">
+      <div className="mt-4 flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3">
         <div className="text-xs">
           <div className="text-muted">Inside right now</div>
           <div className="text-sm font-semibold">

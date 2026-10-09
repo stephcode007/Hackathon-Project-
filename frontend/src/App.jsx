@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import BottomNav from './components/nav/BottomNav'
+import Sidebar from './components/nav/Sidebar'
+import TopBar from './components/nav/TopBar'
+import ProfilePage from './pages/ProfilePage'
 import { sendMessage } from './lib/api'
 import ChatPage from './pages/ChatPage'
 import PassPage from './pages/PassPage'
-import SpacesPage from './pages/SpacesPage'
+import BookingsPage from './pages/BookingsPage'
 
 function App() {
   const [tab, setTab] = useState('chat')
@@ -26,19 +29,27 @@ function App() {
     }
   }
 
-  // Buttons on the Spaces tab hand off to the assistant
-  function ask(text) {
-    setTab('chat')
-    send(text)
-  }
-
   return (
-    <div className="mx-auto flex h-[100dvh] max-w-[440px] flex-col overflow-hidden bg-paper sm:my-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] sm:border sm:border-line sm:shadow-2xl">
-      <main className="min-h-0 flex-1">
+    // Phone: a single column with tabs at the bottom.
+    // Website (lg and up): sidebar | page | bookings panel next to the chat.
+    <div className="mx-auto flex h-[100dvh] max-w-[440px] flex-col overflow-hidden bg-paper sm:my-4 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] sm:border sm:border-line sm:shadow-2xl lg:my-0 lg:h-[100dvh] lg:max-w-none lg:flex-row lg:rounded-none lg:border-0 lg:shadow-none">
+      <Sidebar tab={tab} onChange={setTab} />
+      <TopBar onProfile={() => setTab('profile')} profileActive={tab === 'profile'} />
+      <main className="min-h-0 min-w-0 flex-1">
         {tab === 'chat' && <ChatPage messages={messages} sending={sending} onSend={send} />}
-        {tab === 'pass' && <PassPage />}
-        {tab === 'spaces' && <SpacesPage onAsk={ask} />}
+        {tab !== 'chat' && (
+          <div className="mx-auto h-full max-w-xl">
+            {tab === 'pass' && <PassPage />}
+            {tab === 'bookings' && <BookingsPage />}
+            {tab === 'profile' && <ProfilePage onBack={() => setTab('chat')} />}
+          </div>
+        )}
       </main>
+      {tab === 'chat' && (
+        <aside className="hidden w-[380px] shrink-0 border-l border-line bg-[#efece5] lg:block">
+          <BookingsPage />
+        </aside>
+      )}
       <BottomNav tab={tab} onChange={setTab} />
     </div>
   )

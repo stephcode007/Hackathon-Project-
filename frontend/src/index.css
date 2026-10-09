@@ -8,8 +8,9 @@
   --color-ink: #1d2a26;
   --color-muted: #6b7570;
   --color-line: #e6e2d9;
-  --color-accent: #2f5d50;
-  --color-accent-soft: #e3ece8;
+  /* blueberry, to match the Bookmark logo */
+  --color-accent: #4b56c8;
+  --color-accent-soft: #e8e9fb;
 
   /* busyness levels */
   --color-quiet: #2e9e6b;

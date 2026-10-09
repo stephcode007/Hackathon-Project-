@@ -1,14 +1,10 @@
 import Icon from '../Icon'
 
-const TABS = [
-  { id: 'chat', label: 'Chat', icon: 'chat' },
-  { id: 'pass', label: 'Pass', icon: 'qr' },
-  { id: 'spaces', label: 'Spaces', icon: 'spaces' },
-]
+import { TABS } from './tabs'
 
 export default function BottomNav({ tab, onChange }) {
   return (
-    <nav className="shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
       <div className="grid grid-cols-3">
         {TABS.map((t) => {
           const active = tab === t.id
