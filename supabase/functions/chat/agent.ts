@@ -12,6 +12,10 @@ const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
 
 const MAX_STEPS = 8;
 
+// Only offer Claude the tools that tools.ts actually implements, so it never calls a missing one.
+// New tools appear automatically once they are added to TOOLS (their schema must exist in toolSchemas.ts).
+const AVAILABLE_TOOL_SCHEMAS = TOOL_SCHEMAS.filter((t) => t.name in TOOLS);
+
 export async function runAgent(
   history: { role: "user" | "assistant"; content: string }[],
   studentId: string,
@@ -25,7 +29,7 @@ export async function runAgent(
       model: Deno.env.get("CLAUDE_MODEL") ?? "claude-sonnet-5-5",
       max_tokens: 1024,
       system: buildSystemPrompt(), // fresh date/time/timezone on every request
-      tools: TOOL_SCHEMAS as any,
+      tools: AVAILABLE_TOOL_SCHEMAS as any,
       messages,
     });
 
