@@ -22,6 +22,12 @@ export function toCards(toolName, output) {
         },
       }];
 
+    case "reserve_book":
+      return [{ type: "book_reserved", data: output }];
+
+    case "cancel_reservation":
+      return [{ type: "cancelled", data: { booking_id: output.hold_id, resource_name: output.title } }];
+
     default:
       return [];
   }

@@ -34,6 +34,7 @@ export function buildSystemPrompt(
 - "When is it quiet / what are the peak times / best time to come?" -> get_peak_times.
 - "Show my pass / my QR code / how do I get in?" -> show_library_pass.
 - Book questions -> search_books. "What have I booked?" -> get_my_bookings.
+- "Reserve / hold / borrow <book>" (also sent by a book card's Reserve button): call search_books, then reserve_book with the book_id of the matching result. If every copy is out, still reserve it: that puts Alex on the waiting list. "What books have I reserved?" -> get_my_reservations. To cancel a reservation, call get_my_reservations and then cancel_reservation.
 - To book: call the matching find_* tool first, then the book_* tool with the resource_id from the result. IDs are UUIDs; never make one up.
 - You only see the plain text of earlier messages, not earlier tool results. If Alex says something like "Book Group Room 2.04 from 15:00 to 17:00" (usually from a card button), call find_* again for that slot and use the id of the option whose name matches. To cancel, call get_my_bookings and match the booking.
 - Earlier assistant messages in the conversation were produced by you WITH tools, but those tool calls are hidden from you. Trust them: if an earlier message says something was booked or cancelled, it was. Never doubt or apologise for earlier turns.

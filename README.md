@@ -215,6 +215,9 @@ No login. Everyone is `demo-student-001` ("Alex"). Auth is a time sink that judg
 | `get_peak_times` | Hour-by-hour typical busyness for a day, with the peak and quietest hours | `day?` (default today) |
 | `show_library_pass` | Shows the student's QR pass inside the chat | none |
 | `search_books` | Finds books by title, author or subject | `query` |
+| `reserve_book` | Holds a copy for collection (3 days), or joins the waiting list if all copies are out | `book_id` |
+| `get_my_reservations` | The student's book reservations | none |
+| `cancel_reservation` | Cancels a book reservation | `hold_id` |
 | `find_rooms` | Lists rooms free for a time slot | `date`, `start_time`, `duration_minutes`, `capacity?`, `features?` |
 | `book_room` | Books a room | `room_id`, `starts_at`, `ends_at` |
 | `find_desks` | Lists free desks | `date`, `start_time`, `duration_minutes`, `zone?`, `needs_power?` |
@@ -285,7 +288,8 @@ The frontend only sends plain-text history. Tool calls stay inside the function.
 | `booking` | `book_*` | as in the example above | a confirmation with **Cancel** and **Add to calendar** buttons |
 | `books` | `search_books` | `{ results: [{ book_id, title, author, isbn, floor, shelf, copies_available }] }` | covers with shelf location |
 | `my_bookings` | `get_my_bookings` | `{ bookings: [ …same as booking data… ] }` | a list with a Cancel button on each |
-| `cancelled` | `cancel_booking` | `{ booking_id, resource_name }` | a short confirmation |
+| `book_reserved` | `reserve_book` | `{ hold_id, status: 'ready' \| 'waiting', collect_from, collect_by, available_from, due, return_to, already, book: { book_id, title, author, isbn, floor, shelf } }` | the cover with "collect by" or "on the waiting list" |
+| `cancelled` | `cancel_booking` / `cancel_reservation` | `{ booking_id, resource_name }` | a short confirmation |
 
 Card buttons just send a new chat message, so no extra endpoints are needed.
 
