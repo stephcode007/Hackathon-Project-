@@ -62,6 +62,8 @@ const PATHS = {
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   back: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  plus: <path d="M12 5v14M5 12h14" />,
   chevron: <path d="m9 6 6 6-6 6" />,
   user: (
     <>

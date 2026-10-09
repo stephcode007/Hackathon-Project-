@@ -1,6 +1,6 @@
 import Icon from '../../components/Icon'
 
-// Title row for every page inside Bookings, with a way back
+// Title row for pages inside Bookings, with a way back
 export function PageHeader({ title, onBack, backLabel = 'Bookings' }) {
   return (
     <div className="mb-4">
@@ -24,18 +24,3 @@ export function Section({ title, children }) {
 }
 
 export const List = ({ children }) => <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">{children}</ul>
-
-// "Book" → "Book X today 17:00–19:00?" [Confirm] [Not now]
-export function ConfirmBar({ text, onConfirm, onCancel }) {
-  return (
-    <div className="animate-card-in mt-2 flex items-center gap-2 rounded-xl bg-accent-soft p-2.5 pl-3">
-      <div className="min-w-0 flex-1 text-xs font-semibold text-accent">{text}</div>
-      <button onClick={onCancel} className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink">
-        Not now
-      </button>
-      <button onClick={onConfirm} className="shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-white active:scale-95">
-        Confirm
-      </button>
-    </div>
-  )
-}
