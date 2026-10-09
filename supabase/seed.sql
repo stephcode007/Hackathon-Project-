@@ -3,7 +3,7 @@
 -- Rooms, desks, laptops and bookings are added with the booking feature.
 -- Covers: https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg
 
-truncate books;
+truncate book_holds, books;  -- book_holds (003) references books, so clear both
 
 insert into books (title, author, isbn, subject, floor, shelf, copies_total, copies_available) values
 -- Computer science (floor 3)
@@ -82,3 +82,8 @@ insert into books (title, author, isbn, subject, floor, shelf, copies_total, cop
 ('The Catcher in the Rye', 'J. D. Salinger', '9780316769488', 'Fiction', 4, 'PS3537 .A426 C3', 2, 1),
 ('Educated', 'Tara Westover', '9780399590504', 'Biography', 4, 'CT275 .W43', 2, 1),
 ('Becoming', 'Michelle Obama', '9781524763138', 'Biography', 4, 'E909 .O24', 2, 2);
+
+-- When the next copy of each fully-loaned book is due back (used by the reservations waiting list)
+update books
+set next_due_back = current_date + 2 + (abs(hashtext(title)) % 10)
+where copies_available = 0;

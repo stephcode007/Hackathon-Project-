@@ -79,6 +79,38 @@ export const TOOL_SCHEMAS = [
     },
   },
   {
+    name: "reserve_book",
+    description:
+      "Reserve a book for the student. If a copy is on the shelf it is held for collection from the reservations shelf for 3 days; if every copy is out, the student joins the waiting list and gets the next copy back. Needs a book_id from search_books; never make one up. Reserving twice returns the existing reservation (already: true).",
+    input_schema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "The book's UUID from a search_books result." },
+      },
+      required: ["book_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_my_reservations",
+    description:
+      "The student's current book reservations (ready to collect or on the waiting list). Use for 'what books have I reserved?' and to look up a hold_id before cancelling. No inputs.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cancel_reservation",
+    description:
+      "Cancel one of the student's book reservations. Needs a hold_id from get_my_reservations; never make one up.",
+    input_schema: {
+      type: "object",
+      properties: {
+        hold_id: { type: "string", description: "The reservation's UUID." },
+      },
+      required: ["hold_id"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "find_rooms",
     description:
       "List study rooms that are free for a time slot. Returns each room's resource_id, name, floor, capacity and features. Call this before book_room. Rules: open 08:00-22:00, 30-minute steps, max 3 hours, up to 7 days ahead, never in the past.",
