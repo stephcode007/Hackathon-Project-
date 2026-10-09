@@ -1,4 +1,9 @@
 .env
+.env.*
+!.env.example
 .DS_Store
 .idea/
 node_modules/
+dist/
+supabase/.temp/
+supabase/.branches/
