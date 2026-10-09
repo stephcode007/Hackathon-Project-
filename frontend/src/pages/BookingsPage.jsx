@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import BusynessMeter from '../components/cards/BusynessMeter'
 import LevelBadge from '../components/cards/LevelBadge'
 import { demoNow, hhmm, relativeDay, shortDate } from '../lib/time'
-import { liveBusyness, loans, myBookings, toBookingData } from '../mocks/db'
+import { cancelBooking, liveBusyness, loans, myBookings, toBookingData } from '../mocks/db'
+import BookingDetail from './BookingDetail'
 
 const TYPE_LABEL = { room: 'Room', desk: 'Desk', laptop: 'Laptop' }
 
@@ -14,10 +16,27 @@ function Section({ title, children }) {
   )
 }
 
-export default function BookingsPage({ onAsk }) {
+export default function BookingsPage() {
+  const [openId, setOpenId] = useState(null)
   const now = demoNow()
   const live = liveBusyness(now)
   const mine = myBookings(now).map(toBookingData)
+  const open = mine.find((b) => b.booking_id === openId)
+
+  if (open) {
+    return (
+      <div className="no-scrollbar h-full overflow-y-auto px-4 pt-2 pb-6">
+        <BookingDetail
+          booking={open}
+          onBack={() => setOpenId(null)}
+          onCancel={(b) => {
+            cancelBooking(b.booking_id)
+            setOpenId(null)
+          }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="no-scrollbar h-full overflow-y-auto px-4 pt-5 pb-6">
@@ -50,14 +69,14 @@ export default function BookingsPage({ onAsk }) {
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">{b.resource_name}</div>
                     <div className="text-xs text-muted">
-                      {TYPE_LABEL[b.resource_type]} · {relativeDay(s)} · {hhmm(s)}–{hhmm(new Date(b.ends_at))} · Floor {b.floor}
+                      {TYPE_LABEL[b.resource_type]} · {relativeDay(s)} · {hhmm(s)}–{hhmm(new Date(b.ends_at))}
                     </div>
                   </div>
                   <button
-                    onClick={() => onAsk(`Cancel booking ${b.booking_id.slice(0, 8)}`)}
-                    className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-very-busy hover:bg-very-busy/5"
+                    onClick={() => setOpenId(b.booking_id)}
+                    className="shrink-0 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent hover:text-white"
                   >
-                    Cancel
+                    View my booking
                   </button>
                 </li>
               )

@@ -23,7 +23,7 @@ export default function AvailabilityCard({ data, onAction }) {
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{o.name}</div>
               <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
-                <span>Floor {o.floor}</span>
+                <span>{o.pickup ?? `Floor ${o.floor}`}</span>
                 <Features features={o.features} capacity={o.capacity} zone={resource_type === 'desk' ? o.zone : null} />
               </div>
             </div>

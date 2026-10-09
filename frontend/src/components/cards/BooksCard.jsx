@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { shortDate } from '../../lib/time'
 import Icon from '../Icon'
 import Card from './Card'
 
@@ -33,14 +34,16 @@ export default function BooksCard({ data }) {
               <div className="truncate text-xs text-muted">{b.author}</div>
               <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
                 <span className="flex items-center gap-1 text-muted">
-                  <Icon name="pin" size={12} /> Floor {b.floor} · {b.shelf}
+                  <Icon name="pin" size={12} /> Floor {b.floor} · {b.section} · {b.shelf}
                 </span>
                 {b.copies_available > 0 ? (
                   <span className="rounded-full bg-quiet/12 px-2 py-0.5 font-semibold text-quiet">
-                    {b.copies_available} available
+                    {b.copies_available} of {b.copies_total} in
                   </span>
                 ) : (
-                  <span className="rounded-full bg-very-busy/10 px-2 py-0.5 font-semibold text-very-busy">All out</span>
+                  <span className="rounded-full bg-very-busy/10 px-2 py-0.5 font-semibold text-very-busy">
+                    Taken out{b.due_back && ` · back ${shortDate(new Date(b.due_back))}`}
+                  </span>
                 )}
               </div>
             </div>

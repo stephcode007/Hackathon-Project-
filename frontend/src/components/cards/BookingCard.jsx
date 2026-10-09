@@ -8,7 +8,7 @@ import Features from './Features'
 const TYPE_LABEL = { room: 'Room', desk: 'Desk', laptop: 'Laptop loan' }
 
 export default function BookingCard({ data, onAction }) {
-  const { booking_id, resource_type, resource_name, floor, zone, capacity, features, starts_at, ends_at } = data
+  const { booking_id, resource_type, resource_name, floor, zone, capacity, features, pickup, starts_at, ends_at } = data
   const start = new Date(starts_at)
   const end = new Date(ends_at)
   const cancelled = isCancelled(booking_id)
@@ -38,8 +38,7 @@ export default function BookingCard({ data, onAction }) {
         </div>
         <div className="col-span-2 flex items-center gap-2">
           <Icon name="pin" size={15} className="text-muted" />
-          Floor {floor}
-          {resource_type === 'laptop' && ' · help desk'}
+          {pickup ?? `Floor ${floor}`}
           <span className="ml-1">
             <Features features={features} capacity={capacity} zone={resource_type === 'desk' ? zone : null} />
           </span>

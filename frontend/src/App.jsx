@@ -29,12 +29,6 @@ function App() {
     }
   }
 
-  // Buttons on the Bookings tab hand off to the assistant
-  function ask(text) {
-    setTab('chat')
-    send(text)
-  }
-
   return (
     // Phone: a single column with tabs at the bottom.
     // Website (lg and up): sidebar | page | bookings panel next to the chat.
@@ -46,14 +40,14 @@ function App() {
         {tab !== 'chat' && (
           <div className="mx-auto h-full max-w-xl">
             {tab === 'pass' && <PassPage />}
-            {tab === 'bookings' && <BookingsPage onAsk={ask} />}
+            {tab === 'bookings' && <BookingsPage />}
             {tab === 'profile' && <ProfilePage onBack={() => setTab('chat')} />}
           </div>
         )}
       </main>
       {tab === 'chat' && (
         <aside className="hidden w-[380px] shrink-0 border-l border-line bg-[#efece5] lg:block">
-          <BookingsPage onAsk={ask} />
+          <BookingsPage />
         </aside>
       )}
       <BottomNav tab={tab} onChange={setTab} />
