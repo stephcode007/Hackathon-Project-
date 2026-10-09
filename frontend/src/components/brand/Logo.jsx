@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-// The Bookmark mark: a little blue bookmark ribbon.
+// The Bookmarked mark: a little blue bookmark ribbon.
 // Sized in em so it scales with the text it sits next to.
 export default function BookmarkMark({ size = '1em', className = '' }) {
   const id = useId()
@@ -19,11 +19,11 @@ export default function BookmarkMark({ size = '1em', className = '' }) {
   )
 }
 
-// "Bookmark" with the bookmark as its full stop
+// "Bookmarked" with the bookmark as its full stop
 export function Wordmark({ className = '' }) {
   return (
     <span className={`inline-flex items-baseline font-display font-semibold tracking-tight ${className}`}>
-      Bookmark
+      Bookmarked
       <BookmarkMark size="0.42em" className="ml-[0.06em] self-baseline" />
     </span>
   )
