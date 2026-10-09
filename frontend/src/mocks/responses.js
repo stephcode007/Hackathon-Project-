@@ -63,7 +63,10 @@ export function mockReply(messages) {
 
 // ---------- busyness ----------
 
-function busyness(t, now) {
+function busyness(text, now) {
+  // Only read a day/time from the part of the message about busyness, so
+  // "a room at 3pm. How busy is the library?" asks about right now
+  const t = text.match(/[^.?!,]*\b(busy|packed|full|crowded|how many people|people inside)\b[^.?!,]*/)?.[0] ?? text
   const { date, named } = parseDay(t, now)
   const clock = parseClock(t)
   if (!named && !clock) {
@@ -110,9 +113,23 @@ function peakNote(start) {
 const MAX_MINUTES = { room: 180, desk: 240, laptop: 240 }
 
 function slotFrom(t, now, type, defaultMinutes) {
-  const { date } = parseDay(t, now)
+  const { date, named } = parseDay(t, now)
   const clock = parseClock(t)
-  const start = clock ? at(date, clock.h, clock.m) : sameDay(date, now) ? nextSlot(now) : at(date, 10)
+  let start = clock ? at(date, clock.h, clock.m) : sameDay(date, now) ? nextSlot(now) : at(date, 10)
+  let note = ''
+
+  // "at 3pm" when it's already 5pm and no day was given: rooms and desks move to
+  // tomorrow at 3pm, laptops (same-day only) start at the next free half hour
+  if (clock && !named && start < addMinutes(now, -30)) {
+    if (type === 'laptop') {
+      start = nextSlot(now)
+      note = `${hhmm(at(date, clock.h, clock.m))} has passed, so it's from ${hhmm(start)} today.`
+    } else {
+      start = at(addMinutes(start, 24 * 60), clock.h, clock.m)
+      note = `${hhmm(start)} has passed today, so this is for tomorrow.`
+    }
+  }
+
   const minutes = Math.min(parseDuration(t) ?? defaultMinutes, MAX_MINUTES[type])
   let end = addMinutes(start, minutes)
   if (end > at(start, CLOSE_HOUR)) end = at(start, CLOSE_HOUR)
@@ -122,7 +139,7 @@ function slotFrom(t, now, type, defaultMinutes) {
     return { error: `The library is open ${hourLabel(OPEN_HOUR)}–${hourLabel(CLOSE_HOUR)}. Pick a time in that window?` }
   }
   if (type === 'laptop' && !sameDay(start, now)) return { error: 'Laptops are same-day loans only. Ask me on the day!' }
-  return { start, end }
+  return { start, end, note }
 }
 
 const availability = (type, slot, options) => ({
@@ -143,9 +160,9 @@ function rooms(t, now) {
   const slot = slotFrom(t, now, 'room', 120)
   if (slot.error) return { reply: slot.error, cards: [] }
   const people = partySize(t)
-  const all = freeRooms(slot, people)
+  const all = freeRooms(slot, people, wantsQuiet(t))
   const options = all.slice(0, 4)
-  const note = peakNote(slot.start)
+  const note = [slot.note, peakNote(slot.start)].filter(Boolean).join(' ')
   const who = people > 1 ? people : 'you'
   // Show the choice and let the student confirm by tapping Book
   const found = !all.length
@@ -159,9 +176,18 @@ function rooms(t, now) {
 const partySize = (t) =>
   Number(t.match(/for (\d+)(?!\s*(?:h|hr|hour|min|am|pm|:))/)?.[1] ?? t.match(/(\d+) (?:people|of us|students)/)?.[1] ?? 1)
 
-// Smallest suitable room first, so one person gets a study pod, not the seminar room
-const freeRooms = (slot, people) =>
-  db.findAvailable('room', slot.start, slot.end).filter((r) => r.capacity >= people).sort((a, b) => a.capacity - b.capacity)
+const wantsQuiet = (t) => /\b(quiet|silent)\b/.test(t)
+
+// "a mac" / "macbook" / "macOS", but not "machine learning"
+const laptopOs = (t) => (/\bmac(?:s|book|os)?\b/.test(t) ? 'mac' : /\b(windows|dell|pc)\b/.test(t) ? 'windows' : null)
+
+// Smallest suitable room first, so one person gets a study pod, not the seminar room.
+// Asking for somewhere quiet puts the enclosed study pods first.
+const freeRooms = (slot, people, quiet = false) =>
+  db
+    .findAvailable('room', slot.start, slot.end)
+    .filter((r) => r.capacity >= people)
+    .sort((a, b) => (quiet ? Number(b.name.includes('Pod')) - Number(a.name.includes('Pod')) : 0) || a.capacity - b.capacity)
 
 function roomOverview(now) {
   const list = db.roomStatus(now)
@@ -204,13 +230,15 @@ function desks(t, now) {
 function laptops(t, now) {
   const slot = slotFrom(t, now, 'laptop', 180)
   if (slot.error) return { reply: slot.error, cards: [] }
-  const os = /\bmac/.test(t) ? 'mac' : /windows|dell|pc\b/.test(t) ? 'windows' : null
+  const os = laptopOs(t)
   const total = db.resources.filter((r) => r.type === 'laptop').length
   const options = db.findAvailable('laptop', slot.start, slot.end).filter((r) => !os || r.features.includes(os))
-  if (!options.length) return { reply: `All laptops are out ${when(slot)}. Try a bit later?`, cards: [] }
+  const note = slot.note ? `${slot.note} ` : ''
+  const kind = os === 'mac' ? 'MacBooks' : os === 'windows' ? 'Windows laptops' : 'laptops'
+  if (!options.length) return { reply: `${note}All ${kind} are out ${when(slot)}. Try a bit later${os ? ', or a different kind' : ''}?`, cards: [] }
   if (options.length === 1) {
     const l = options[0]
-    return { reply: `Only one laptop left ${when(slot)}: ${l.name}, from the ${l.pickup.toLowerCase()}. Want it?`, cards: [availability('laptop', slot, options)] }
+    return { reply: `${note}Only one laptop left ${when(slot)}: ${l.name}, from the ${l.pickup.toLowerCase()}. Want it?`, cards: [availability('laptop', slot, options)] }
   }
   // Say how many are free and where each kind is collected
   const byPickup = {}
@@ -219,7 +247,7 @@ function laptops(t, now) {
     .map(([pickup, n]) => `${n} at the ${pickup.toLowerCase()}`)
     .join(' and ')
   return {
-    reply: `${options.length} of ${total} laptops are free ${when(slot)}: ${where}. Tap one to request it.`,
+    reply: `${note}${options.length} of ${total} laptops are free ${when(slot)}: ${where}. Tap one to request it.`,
     cards: [availability('laptop', slot, options.slice(0, 4))],
   }
 }
@@ -227,16 +255,24 @@ function laptops(t, now) {
 // ---------- all in one ----------
 
 // "I'm looking for the machine learning book, book me a room and a laptop"
-// Books everything straight away and says where it all is.
+// "I need a book on machine learning, a laptop, and a quiet room for 2 at 3pm"
+// Asking for two or more things at once books them straight away and says where it all is.
 function allInOne(t, now) {
   const wantsRoom = /\brooms?\b|\bpod\b/.test(t)
   const wantsLaptop = /\blaptops?\b/.test(t)
   const q = bookQuery(t)
-  const asksToBook = /\bbook (?:me )?(?:a |an |the )?(?:study |group )?(?:room|laptop|pod)/.test(t)
-  if (!asksToBook || [wantsRoom, wantsLaptop, Boolean(q)].filter(Boolean).length < 2) return null
+  const asksFor = /\b(book|reserve|need|want|get me|find me|looking for|grab)\b/.test(t)
+  if (!asksFor || [wantsRoom, wantsLaptop, Boolean(q)].filter(Boolean).length < 2) return null
 
   const lines = []
   const cards = []
+
+  // "...and how busy is the library?" in the same message
+  if (/\b(busy|packed|crowded|how many people)\b/.test(t)) {
+    const busy = busyness(t, now)
+    lines.push(busy.reply)
+    cards.push(...busy.cards)
+  }
 
   if (q) {
     const found = searchBooks(q)
@@ -251,25 +287,29 @@ function allInOne(t, now) {
   if (wantsRoom) {
     const slot = slotFrom(t, now, 'room', 120)
     const people = partySize(t)
-    const room = slot.error ? null : freeRooms(slot, people)[0]
+    const quiet = wantsQuiet(t)
+    const room = slot.error ? null : freeRooms(slot, people, quiet)[0]
     if (slot.error) lines.push(slot.error)
     else if (!room) lines.push(`No rooms for ${people} are free ${when(slot)}.`)
     else {
       const b = db.createBooking(room.id, slot.start, slot.end)
-      lines.push(`I've booked ${room.name} on floor ${room.floor} for you ${when(slot)}${people === 1 ? ", since it's just you" : ` for ${people} people`}.`)
+      const why = people === 1 ? ", since it's just you" : ` for ${people} people`
+      const pod = room.name.includes('Pod')
+      const kind = quiet && pod ? 'a quiet study pod, ' : quiet ? 'no quiet pods are free then, so a group room, ' : ''
+      lines.push(`${slot.note ? `${slot.note} ` : ''}I've booked ${room.name} (${kind}floor ${room.floor}) ${when(slot)}${why}.`)
       cards.push({ type: 'booking', data: db.toBookingData(b) })
     }
   }
 
   if (wantsLaptop) {
     const slot = slotFrom(t, now, 'laptop', 180)
-    const os = /\bmac/.test(t) ? 'mac' : /windows|dell|pc\b/.test(t) ? 'windows' : null
+    const os = laptopOs(t)
     const laptop = slot.error ? null : db.findAvailable('laptop', slot.start, slot.end).find((r) => !os || r.features.includes(os))
     if (slot.error) lines.push(slot.error)
     else if (!laptop) lines.push(`All laptops are out ${when(slot)}.`)
     else {
       const b = db.createBooking(laptop.id, slot.start, slot.end)
-      lines.push(`And I've requested ${laptop.name} for ${when(slot)}. I'll tell you when it's approved, then pick it up from the ${laptop.pickup.toLowerCase()}.`)
+      lines.push(`And I've requested ${laptop.name} for ${when(slot)}${slot.note ? ` (${slot.note.replace(/\.$/, '')})` : ''}. I'll tell you when it's approved, then pick it up from the ${laptop.pickup.toLowerCase()}.`)
       cards.push({ type: 'booking', data: db.toBookingData(b) })
     }
   }
